@@ -48,13 +48,17 @@ func discardHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func cutHandler(w http.ResponseWriter, r *http.Request) {
-	var cutLocation int
-	err := decodeJSON(r.Body, &cutLocation)
+	type cutRequest struct {
+		Location int `json:"location"`
+	}
+	var req cutRequest
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = cutDeck(cutLocation)
+	err = cutDeck(req.Location)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -92,7 +96,9 @@ func dealCard() (Card, error) {
 	if len(deck) == 0 {
 		return Card{}, errors.New("Deck is empty. Can't deal cards.")
 	}
-	return deck[0], nil // Remove and return the first element
+	dealtCard := deck[0]
+	deck = deck[1:]
+	return dealtCard, nil
 }
 
 func discardCard(card Card) {
